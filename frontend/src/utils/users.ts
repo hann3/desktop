@@ -51,12 +51,12 @@ const updateReview = async (id: string, nickname: string) => {
     .catch(e => console.error(e));
 };
 
-const getPhoneNumber = async (id: string) => {
+const fetchUserInfo = async (id: string) => {
   return await axios
-    .post('/api/user/phone', {
+    .post('/api/user', {
       id: id,
     })
     .then(({ data }) => data)
     .catch(e => console.error(e));
 };
-export { isValidProfile, createUser, updateUser, updateReservation, updateReview, getPhoneNumber };
+export { isValidProfile, createUser, updateUser, updateReservation, updateReview, fetchUserInfo };

@@ -10,7 +10,7 @@ import { StyledHeader } from './Header.style';
 
 const Header = () => {
   const dispatch = useDispatch();
-  const { id, nickname, email } = useAppSelector(selectAuth) as AuthType;
+  const { id } = useAppSelector(selectAuth) as AuthType;
 
   const { pathname } = useLocation();
 
@@ -24,7 +24,7 @@ const Header = () => {
 
   netlifyIdentity.on('login', async ({ id, email, user_metadata: { full_name: nickname } }) => {
     let authorizedUser = {};
-    let storedUser = { id: null, nickname: null, email: null, reservation: null, myReviews: null };
+    let storedUser = { id: null, reservation: null, myReviews: null };
     if (sessionStorage.getItem('persist:root')) {
       const { auth } = JSON.parse(sessionStorage.getItem('persist:root'));
       storedUser = JSON.parse(auth);
@@ -34,8 +34,6 @@ const Header = () => {
 
     authorizedUser = {
       id: storedUser.id ? storedUser.id : user.id,
-      nickname: storedUser.nickname ? storedUser.nickname : user.nickname,
-      email: storedUser.email ? storedUser.email : user.email,
       reservations: storedUser.reservation ? storedUser.reservation : user.reservation,
       myReviews: storedUser.myReviews ? storedUser.myReviews : user.myReviews,
     };
@@ -61,7 +59,7 @@ const Header = () => {
         </h1>
       </Link>
 
-      {!nickname && !email && !id ? (
+      {!id ? (
         <button onClick={login}>로그인</button>
       ) : pathname.includes('reservation') ? null : (
         <div>

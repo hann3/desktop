@@ -4,16 +4,12 @@ import { RootState } from './rootReducer';
 
 export interface AuthType {
   id: string | null;
-  nickname: string | null;
-  email: string | null;
   reservations: number[] | null;
   myReviews: number[] | null;
 }
 
 const initialState: AuthType = {
   id: null,
-  nickname: null,
-  email: null,
   reservations: null,
   myReviews: null,
 };

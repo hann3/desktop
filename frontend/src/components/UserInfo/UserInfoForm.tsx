@@ -1,35 +1,24 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { UserInfoFormContainer } from './Profile.style';
 import { AuthType, authUpdate, selectAuth } from 'src/contexts/auth';
 import { useAppSelector } from 'src/contexts/state.type';
 import { useDispatch } from 'react-redux';
-import { getPhoneNumber, isValidProfile, updateUser } from 'src/utils/users';
-import { ProfileEditor } from './User.type';
+import { fetchUserInfo, isValidProfile, updateUser } from 'src/utils/users';
+import { ProfileEditor, User } from './User.type';
 
 const UserInfoForm = ({ isEditingMode, setEditingMode }: ProfileEditor) => {
-  const { id, nickname, email } = useAppSelector(selectAuth) as AuthType;
+  const { id } = useAppSelector(selectAuth) as AuthType;
 
-  const [tempNickname, setNickname] = useState<string>(nickname);
+  const [user, setUserInfo] = useState<User>({ id: id, email: '', nickname: '', phone: '' });
 
-  const [tempPhone, setPhone] = useState<string>('');
-
-  let initialPhone = '';
   useEffect(() => {
-    const getPhone = async () => {
-      if (id) {
-        const {
-          0: { phone },
-        } = await getPhoneNumber(id);
-        initialPhone = phone;
-        setPhone(initialPhone);
-      }
-    };
-    getPhone();
+    fetchUserInfo(id).then(data => {
+      setUserInfo(data[0]);
+    });
   }, []);
 
-  const handlerChange = ({ target: { id, value } }) => {
-    id === 'nickname' ? setNickname(value) : setPhone(value);
-  };
+  const nicknameRef = useRef<HTMLInputElement>(null);
+  const phoneRef = useRef<HTMLInputElement>(null);
 
   const dispatch = useDispatch();
 
@@ -40,10 +29,10 @@ const UserInfoForm = ({ isEditingMode, setEditingMode }: ProfileEditor) => {
       setEditingMode(true);
       return;
     }
+    if (!nicknameRef.current || !phoneRef.current) return;
 
-    if (isValidProfile(tempNickname, tempPhone)) {
-      if (tempNickname === nickname && tempPhone === initialPhone) return;
-      const updatedProfile = await updateUser(id, tempNickname, tempPhone);
+    if (isValidProfile(nicknameRef.current.value, phoneRef.current.value)) {
+      const updatedProfile = await updateUser(id, nicknameRef.current.value, phoneRef.current.value);
       dispatch(authUpdate({ ...updatedProfile }));
       setEditingMode(false);
     }
@@ -53,11 +42,11 @@ const UserInfoForm = ({ isEditingMode, setEditingMode }: ProfileEditor) => {
     <UserInfoFormContainer onSubmit={updateProfile}>
       <fieldset>
         <legend>
-          <strong>{nickname}</strong>님의 프로필
+          <strong>{user.nickname}</strong>님의 프로필
         </legend>
         <div>
           <span>이메일</span>
-          <span>{email}</span>
+          <span>{user.email}</span>
         </div>
         {isEditingMode ? (
           <>
@@ -69,9 +58,9 @@ const UserInfoForm = ({ isEditingMode, setEditingMode }: ProfileEditor) => {
                 required
                 minLength={1}
                 maxLength={6}
-                value={tempNickname}
+                ref={nicknameRef}
+                defaultValue={user.nickname}
                 placeholder="닉네임(최대 6자리까지)"
-                onChange={handlerChange}
               ></input>
             </div>
             <div>
@@ -82,9 +71,9 @@ const UserInfoForm = ({ isEditingMode, setEditingMode }: ProfileEditor) => {
                 required
                 minLength={11}
                 maxLength={11}
-                value={tempPhone}
+                ref={phoneRef}
+                defaultValue={user.phone}
                 placeholder={'11자리 숫자를 입력하세요'}
-                onChange={handlerChange}
               ></input>
             </div>
           </>
@@ -92,11 +81,11 @@ const UserInfoForm = ({ isEditingMode, setEditingMode }: ProfileEditor) => {
           <>
             <div>
               <span>닉네임</span>
-              <span>{tempNickname}</span>
+              <span>{user.nickname}</span>
             </div>
             <div>
               <span>전화번호</span>
-              <span>{!tempPhone ? '입력된 정보가 없습니다' : tempPhone}</span>
+              <span>{!user.phone ? '입력된 정보가 없습니다' : user.phone}</span>
             </div>
           </>
         )}

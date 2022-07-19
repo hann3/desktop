@@ -8,7 +8,7 @@ import PaymentForm from 'components/Payment/PaymentForm';
 
 import { postHotel } from 'src/utils/hotels';
 import { postReservation } from 'src/utils/reservations';
-import { getPhoneNumber, updateReservation } from 'src/utils/users';
+import { fetchUserInfo, updateReservation } from 'src/utils/users';
 import { postPayment } from 'src/utils/payment';
 
 import swal from 'sweetalert';
@@ -18,23 +18,22 @@ import { reducer } from './Reducer';
 import { RoomInfo } from 'components/Payment/Payment.type';
 
 const Reservation = () => {
-
   const { id: hotelId } = useParams();
   const { id: userId } = useAppSelector(selectAuth) as AuthType;
 
-  let phone='';
-  useEffect(()=>{
-    const getPhone=async()=>{
-      if(userId){
-        const data=await getPhoneNumber(userId);
-        phone=data.phone;
-      } 
-    }
+  let phone = '';
+  useEffect(() => {
+    const getPhone = async () => {
+      if (userId) {
+        const data = await fetchUserInfo(userId);
+        phone = data.phone;
+      }
+    };
     getPhone();
-  },[]);
+  }, []);
 
-  const roomInfo = JSON.parse(window.sessionStorage.getItem("SELECTED_ROOM")) as RoomInfo;
-  const hotelName = window.sessionStorage.getItem("HOTEL_NAME");
+  const roomInfo = JSON.parse(window.sessionStorage.getItem('SELECTED_ROOM')) as RoomInfo;
+  const hotelName = window.sessionStorage.getItem('HOTEL_NAME');
 
   const selectedRoom = {
     hotelName: hotelName,
@@ -67,16 +66,16 @@ const Reservation = () => {
 
     payment: {
       userId: userId,
-      cost: selectedRoom.cost
+      cost: selectedRoom.cost,
     },
 
     hotel: {
       name: selectedRoom.hotelName,
-      photo: selectedRoom.photo
+      photo: selectedRoom.photo,
     },
 
-    sameUser: false
-  }
+    sameUser: false,
+  };
 
   const [state, dispatch] = useReducer(reducer, initialState);
   const { reservation, payment, hotel, sameUser } = state;
@@ -88,15 +87,18 @@ const Reservation = () => {
     dispatch({
       type: 'HANDLE_RESERVATION',
       id,
-      value
-    })
+      value,
+    });
   }, []);
 
-  const handleAgree = useCallback((isAgrees: boolean[]) => {
-    const id = 'isAgrees';
-    const value = isAgrees;
-    handleReservation(id, value)
-  }, [reservation]);
+  const handleAgree = useCallback(
+    (isAgrees: boolean[]) => {
+      const id = 'isAgrees';
+      const value = isAgrees;
+      handleReservation(id, value);
+    },
+    [reservation],
+  );
 
   const handleUserClick = useCallback(() => {
     const id = 'phone';
@@ -105,21 +107,26 @@ const Reservation = () => {
     handleReservation(id, value);
     dispatch({
       type: 'SAME_USER',
-      isSameUser
+      isSameUser,
     });
   }, [reservation]);
 
-  const handleUserInput = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const { id, value } = e.target;
-    handleReservation(id, value);
-  }, [reservation]);
+  const handleUserInput = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { id, value } = e.target;
+      handleReservation(id, value);
+    },
+    [reservation],
+  );
 
-  const handleVisited = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const id = 'hasCar';
-    const value = e.target.checked;
-    handleReservation(id, value);
-  }, [reservation]);
-
+  const handleVisited = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const id = 'hasCar';
+      const value = e.target.checked;
+      handleReservation(id, value);
+    },
+    [reservation],
+  );
 
   const handleButton = useCallback((e: MouseEvent) => {
     e.preventDefault();
@@ -128,20 +135,19 @@ const Reservation = () => {
       title: '예약 정보를 확인해주세요!',
       text: `예약자: ${reservation.username}\n연락처: ${reservation.phone}`,
       icon: 'info',
-      buttons: ['취소', '결제하기']
-    }).then((result) => {
+      buttons: ['취소', '결제하기'],
+    }).then(result => {
       if (result) {
         swal({
           title: '결제 확인',
           text: '결제가 성공적으로 완료되었습니다!',
           icon: 'success',
-        })
+        });
         handleSubmit();
         navigate('/mypage');
       }
-    })
-
-  }, [])
+    });
+  }, []);
 
   const authDispatch = useDispatch();
 
@@ -153,12 +159,11 @@ const Reservation = () => {
     await postPayment(reservationId, payment);
     const reservations = await updateReservation(userId, reservationId);
     authDispatch(authUpdate({ reservations: reservations ? reservations : [] }));
-  }
+  };
 
   useEffect(() => {
     // 모든 필수 입력이 입력되었을 때만 결제 버튼 활성화
     sumbmitBtn.current.disabled = !(reservation.username && reservation.phone && reservation.isAgrees[0]);
-
   }, [reservation]);
 
   return (
